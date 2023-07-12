@@ -3,8 +3,8 @@
     <view class="button_click_show" @click="handleClick">{{
       open ? "收起" : "下拉"
     }}</view>
-    <view class="drop_down_panel" :style="{height: styleHeight+'px'}">
-      <view :class="{drop_down_panel_body : true}" ref="eleBody">
+    <view :class="{'drop_down_panel': true, 'drop_down_panel--close': !open}" :style="{height: styleHeight+'px'}">
+      <view class="drop_down_panel_body" :id="`ele_${uid}`">
 		<slot></slot>
 	  </view>
     </view>
@@ -12,43 +12,41 @@
 </template>
 
 <script>
-	import uni from '';
+	import uuid from 'uuid';
 	export default {
 		props: {
 			open: {
-			default: false,
-			changeFn: () => {},
-			},
+				default: false,
+			}
 		},
 		data() {
 			return {
-				complete: true,
 				styleHeight: '',
 				height: 0,
+				uid: ''
 			};
 		},
 		methods: {
 			animateHeight() {
-				const startHeight = open ? height : 0;
-				const endHeight = open ? 0 : height;
+				const startHeight = this.open ? this.height : 0;
+				const endHeight = this.open ? 0 : this.height;
 				this.styleHeight = startHeight;
+				console.log(this.open);
 				setTimeout(() => {
 					this.styleHeight = endHeight;
-					setTimeout(() => {
-						this.styleHeight = '';
-					}, 700)
-				}, 100)
-
+					this.$emit('change-fn');
+				}, 100);
 			},
 			handleClick() {
-				this.complete = false;
 				this.animateHeight();
-				changeFn();
 			},
+		},
+		created() {
+			this.uid = uuid();
 		},
 		mounted() {
 			uni.createSelectorQuery().in(this)
-				.select(`#${this.$refs.eleBody.id}`)
+				.select(`#ele_${this.uid}`)
 				.boundingClientRect()
 				.exec((res) => {
 					this.height = parseInt(res[0].height.toString());
@@ -57,8 +55,9 @@
 	};
 </script>
 
-<style lang="sass">
+<style lang="scss">
 	.drop_down_component {
+		background-color: #eee;
 		.button_click_show {
 			line-height: 1.7;
 			font-size: 26px;
@@ -66,9 +65,12 @@
 			padding: 0 10px;
 		}
 		.drop_down_panel {
-			height: 0;
+			position: relative;
 			overflow: hidden;
-			transition: height 500ms cubic-bezier(0.1, 0.7, 1, 0.1);
+			transition: height 500ms;
+			&--close {
+				height: 0;
+			}
 		}
 	}
 </style>
